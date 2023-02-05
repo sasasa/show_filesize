@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-import os
+# import os
 #--------------------vvv
 #【1.使うライブラリをimport】
 from pathlib import Path
@@ -25,7 +25,7 @@ def foldersize(infolder, ext):
     filelist = []
     try:
         for p in Path(infolder).rglob(f"*.{ext}"):     #このフォルダ以下すべてのファイルを
-            if p.name and p.name[0] != "." and os.path.isfile(str(p)):                #隠しファイルでなければ
+            if p.name and p.name[0] != "." and p.is_file():                #隠しファイルでなければ
                 filelist.append(str(p))         #リストに追加して
         for filename in sorted(filelist):       #ソートして1ファイルずつ処理
             size = Path(filename).stat().st_size
