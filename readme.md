@@ -1,0 +1,1 @@
+ pyinstaller show_filesize.pyw --onefile --noconsole

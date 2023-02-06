@@ -1,1 +1,0 @@
-pyinstaller show_filesize.pyw
