@@ -24,7 +24,11 @@ def foldersize(infolder, ext):
     allsize = 0
     filelist = []
     try:
-        for p in Path(infolder).rglob(f"*.{ext}"):     #このフォルダ以下すべてのファイルを
+        if values["radio1"]:
+            paths = Path(infolder).glob(f"*.{ext}")#このフォルダのみのファイルを
+        elif values["radio2"]:
+            paths = Path(infolder).rglob(f"*.{ext}")#このフォルダ以下すべてのファイルを
+        for p in paths:
             if p.name and p.name[0] != "." and p.is_file():                #隠しファイルでなければ
                 filelist.append(str(p))         #リストに追加して
         for filename in sorted(filelist):       #ソートして1ファイルずつ処理
@@ -56,11 +60,14 @@ layout = [[sg.Text("読み込みフォルダ", size=(14,1)),
            sg.Input(infolder, key="infolder"),sg.FolderBrowse("選択")],
           [sg.Text(label1, size=(14,1)), sg.Input(value1, key="input1")],
           [sg.Button("実行", size=(20,1), pad=(5,15), bind_return_key=True)],
+          [sg.Radio('このフォルダだけ', group_id="RADIO", default=True, key="radio1"),
+           sg.Radio('このフォルダ配下全て', group_id="RADIO", default=False, key="radio2"),],
           [sg.Multiline(key="text1", size=(60,10))]]
 #アプリの実行処理
 window = sg.Window(title, layout, font=(None,14))
 while True:
     event, values = window.read()
+    # print(" イベント:",event ,", 値:",values)
     if event == None:
         break
     if event == "実行":
