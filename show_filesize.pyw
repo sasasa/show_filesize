@@ -25,10 +25,11 @@ def foldersize(infolder, ext):
     filelist = []
     try:
         if values["radio1"]:
-            paths = Path(infolder).glob(f"*.{ext}")#このフォルダのみのファイルを
+            searchFiles = getattr(Path(infolder), 'glob')#このフォルダのみのファイルを
         elif values["radio2"]:
-            paths = Path(infolder).rglob(f"*.{ext}")#このフォルダ以下すべてのファイルを
-        for p in paths:
+            searchFiles = getattr(Path(infolder), 'rglob')
+            #このフォルダ以下すべてのファイルを
+        for p in searchFiles(f"*.{ext}"):
             if p.name and p.name[0] != "." and p.is_file():                #隠しファイルでなければ
                 filelist.append(str(p))         #リストに追加して
         for filename in sorted(filelist):       #ソートして1ファイルずつ処理
