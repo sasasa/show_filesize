@@ -1,2 +1,7 @@
 dist/
 build/
+show_filesize.build/
+show_filesize.dist/
+show_filesize.onefile-build/
+show_filesize.exe
+
