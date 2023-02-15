@@ -9,6 +9,10 @@ title = "ファイルの合計サイズを表示（フォルダ以下すべて�
 infolder = "."
 label1, value1 = "拡張子", "*"
 
+# 配列をflattenする
+def flatten(x):
+    return [z for y in x for z in (flatten(y) if hasattr(y, '__iter__') and not isinstance(y, str) else (y,))]
+
 #【3.関数: ファイルサイズを最適単位で返す】
 def format_bytes(size):
     units = ["バイト","KB","MB","GB","TB","PB","EB"]
@@ -38,8 +42,6 @@ def foldersize(infolder, ext, ext2):
             searchFiles = getattr(Path(infolder), 'glob')#このフォルダのみのファイルを
         elif values["radio2"]:
             searchFiles = getattr(Path(infolder), 'rglob')#このフォルダ以下すべてのファイルを
-        # 配列をflattenする
-        flatten = lambda x: [z for y in x for z in (flatten(y) if hasattr(y, '__iter__') and not isinstance(y, str) else (y,))]
         for p in flatten([searchFiles(f"*.{x}") for x in ext]):
             if p.name and p.name[0] != "." and p.is_file():                #隠しファイルでなければ
                 filelist.append(str(p))         #リストに追加して
