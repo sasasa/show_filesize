@@ -1,8 +1,10 @@
 import PySimpleGUI as sg
 import os
-#--------------------vvv
-#【1.使うライブラリをimport】
 from pathlib import Path
+import chardet
+from openpyxl import load_workbook
+from docx import Document
+from pdfminer.high_level import extract_text
 
 #【2.アプリに表示する文字列を設定】
 title = "ファイルの合計サイズを表示（フォルダ以下すべての）"
@@ -23,17 +25,19 @@ def format_bytes(size):
     return str(int(size)) + " " + units[n]
 
 #【3.関数: フォルダ以下のファイルのサイズ合計を求める】
-def foldersize(infolder, ext, ext2):
+def foldersize(infolder, ext, extList, search):
     global itms
     msg = ""
     allsize = 0
     filelist = []
+    grepList = []
     extSet = set()
+    grepExtSet = set()
     # "全て"を含むか
-    if len(ext2) > 0:
+    if len(extList) > 0:
         # 拡張子配列のそれぞれの.を削除
-        ext = [x.replace(".", "") for x in ext2]
-        if "全て" in ext2:
+        ext = [x.replace(".", "") for x in extList]
+        if "全て" in extList:
             ext = ["*"]
     else:
         ext = [ext]
@@ -49,13 +53,118 @@ def foldersize(infolder, ext, ext2):
             # 拡張子を取得 小文字に変換
             ext = os.path.splitext(filename)[1].lower()
             extSet.add(ext)
-            size = Path(filename).stat().st_size
-            msg += filename + " : "+format_bytes(size)+"\n"
-            allsize += size
+            path = Path(filename)
+            if search != "":
+                # エクセルファイルかどうか
+                if ext == ".xls" or ext == ".xlsx":
+                    # エクセルファイルを開く
+                    wb = load_workbook(filename)
+                    # シート名を取得
+                    flg = True
+                    for sheetname in wb.sheetnames:
+                        if flg == False:
+                            break
+                        # シートを選択
+                        sheet = wb[sheetname]
+                        # セルを取得
+                        for row in sheet.rows:
+                            if flg == False:
+                                break
+                            for cell in row:
+                                if flg == False:
+                                    break
+                                # 検索文字が含まれているか
+                                if search in str(cell.value):
+                                    # ファイルサイズを取得
+                                    size = path.stat().st_size
+                                    msg += filename + " : "+format_bytes(size)+"\n"
+                                    allsize += size
+                                    grepList.append(filename)
+                                    grepExtSet.add(ext)
+                                    flg = False
+                                    break
+                # ワードファイルかどうか
+                elif ext == ".doc" or ext == ".docx":
+                    # ワードファイルを開く
+                    try:
+                        doc = Document(filename)
+                    except:
+                        continue
+                    # テキストを取得
+                    flg = True
+                    for paragraph in doc.paragraphs:
+                        # 検索文字が含まれているか
+                        if search in paragraph.text:
+                            # ファイルサイズを取得
+                            size = path.stat().st_size
+                            msg += filename + " : "+format_bytes(size)+"\n"
+                            allsize += size
+                            grepList.append(filename)
+                            grepExtSet.add(ext)
+                            flg = False
+                            break
+                    # テーブルを取得
+                    for t in doc.tables:
+                        if flg == False:
+                            break
+                        for row in t.rows:
+                            if flg == False:
+                                break
+                            for cell in row.cells:
+                                # 検索文字が含まれているか
+                                if search in cell.text:
+                                    # ファイルサイズを取得
+                                    size = path.stat().st_size
+                                    msg += filename + " : "+format_bytes(size)+"\n"
+                                    allsize += size
+                                    grepList.append(filename)
+                                    grepExtSet.add(ext)
+                                    flg = False
+                                    break
+                # PDFファイルかどうか
+                elif ext == ".pdf":
+                    txt = extract_text(filename)
+                    # 検索文字が含まれているか
+                    if search in txt:
+                        # ファイルサイズを取得
+                        size = path.stat().st_size
+                        msg += filename + " : "+format_bytes(size)+"\n"
+                        allsize += size
+                        grepList.append(filename)
+                        grepExtSet.add(ext)
+                # テキストファイルかどうか
+                else:
+                    with open(path, "rb") as f:
+                        b = f.read(1024)
+                        if b:
+                            try:
+                                encode = chardet.detect(b)["encoding"]
+                                # テキストファイルかどうか
+                                if encode != None:
+                                    txt = path.read_text(encoding=encode)
+                                    if search in txt:
+                                        # ファイルサイズを取得
+                                        size = path.stat().st_size
+                                        msg += filename + " : "+format_bytes(size)+"\n"
+                                        allsize += size
+                                        grepList.append(filename)
+                                        grepExtSet.add(ext)
+                            except:
+                                pass
+            else:
+                # ファイルサイズを取得
+                size = path.stat().st_size
+                msg += filename + " : "+format_bytes(size)+"\n"
+                allsize += size
         filesize = "合計サイズ = " + format_bytes(allsize) + "\n"
-        filesize += "ファイル数 = " + str(len(filelist))+ "\n"
+        if search != "":
+            filesize += "ファイル数 = " + str(len(grepList))+ "\n"
+        else:
+            filesize += "ファイル数 = " + str(len(filelist))+ "\n"
         msg = filesize + msg
         # リストボックスの更新 ソートする
+        if search != "":
+            extSet = grepExtSet
         itms = itms + sorted(list(extSet))
         window["listbox1"].update(itms)
         # リストボックスのサイズを更新
@@ -68,8 +177,8 @@ def foldersize(infolder, ext, ext2):
                 height = len(itms) // 2
         window["listbox1"].Widget.config(height=height)
         # リストボックスの選択状態を更新
-        # 拡張子配列のそれぞれのindexを取得
-        window["listbox1"].update(set_to_index=[itms.index(x) for x in ext2])
+        # 拡張子配列のそれぞれのindexを取得 itms配列の中にextList配列が含まれているか
+        window["listbox1"].update(set_to_index=[itms.index(x) for x in extList if x in itms])
         itms = ["全て",]
         return msg
     except Exception as e:
@@ -79,22 +188,21 @@ def foldersize(infolder, ext, ext2):
 def execute():
     infolder = values["infolder"]
     value1 = values["input1"]
+    search = values["input2"]
     # 絞り込む拡張子を取得
     extList = values["listbox1"]
     if value1 == "":
         # popupを出す
         sg.popup("拡張子を入力してください", title='エラー', keep_on_top=True)
         return
-    #--------------------vvv
-    #【4.関数を実行】
-    msg = foldersize(infolder, value1, extList)
-    #--------------------^^^
+    msg = foldersize(infolder, value1, extList, search)
     window["text1"].update(msg)
 #アプリのレイアウト
 itms = ["全て",]
 layout = [[sg.Text("読み込みフォルダ", size=(14,1)),
            sg.Input(infolder, key="infolder"),sg.FolderBrowse("選択")],
           [sg.Text(label1, size=(14,1)), sg.Input(value1, key="input1")],
+          [sg.Text("検索文字", size=(14,1)), sg.Input("", key="input2")],
           [sg.Button("実行", size=(20,1), pad=(5,15), bind_return_key=True)],
           [sg.Radio('このフォルダだけ', group_id="RADIO", default=True, key="radio1", enable_events=True),
            sg.Radio('このフォルダ配下全て', group_id="RADIO", default=False, key="radio2", enable_events=True),],
