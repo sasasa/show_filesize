@@ -1,2 +1,8 @@
- pyinstaller show_filesize.pyw --onefile --noconsole
- nuitka --mingw64 --follow-imports --onefile --enable-plugin=tk-inter --disable-console .\show_filesize.pyw
+pyinstaller show_filesize.pyw --onefile --noconsole
+
+nuitka --mingw64 --follow-imports --onefile --enable-plugin=tk-inter --disable-console .\show_filesize.pyw
+
+py -m pip install chardet
+py -m pip install openpyxl
+py -m pip install python-docx
+py -m pip install pdfminer.six

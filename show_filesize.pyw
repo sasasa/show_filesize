@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 import os
 from pathlib import Path
-import chardet
+from chardet import detect
 from openpyxl import load_workbook
 from docx import Document
 from pdfminer.high_level import extract_text
@@ -138,7 +138,7 @@ def foldersize(infolder, ext, extList, search):
                         b = f.read(1024)
                         if b:
                             try:
-                                encode = chardet.detect(b)["encoding"]
+                                encode = detect(b)["encoding"]
                                 # テキストファイルかどうか
                                 if encode != None:
                                     txt = path.read_text(encoding=encode)
