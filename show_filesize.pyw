@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 import os
+import re
 from pathlib import Path
 from chardet import detect
 from openpyxl import load_workbook
@@ -55,6 +56,7 @@ def foldersize(infolder, ext, extList, search):
             extSet.add(ext)
             path = Path(filename)
             if search != "":
+                search = re.compile(search)
                 # エクセルファイルかどうか
                 if ext == ".xls" or ext == ".xlsx":
                     # エクセルファイルを開く
@@ -73,8 +75,8 @@ def foldersize(infolder, ext, extList, search):
                             for cell in row:
                                 if flg == False:
                                     break
-                                # 検索文字が含まれているか
-                                if search in str(cell.value):
+                                # 正規表現で検索文字が含まれているか
+                                if len(re.findall(search, str(cell.value))) > 0:
                                     # ファイルサイズを取得
                                     size = path.stat().st_size
                                     msg += filename + " : "+format_bytes(size)+"\n"
@@ -94,7 +96,7 @@ def foldersize(infolder, ext, extList, search):
                     flg = True
                     for paragraph in doc.paragraphs:
                         # 検索文字が含まれているか
-                        if search in paragraph.text:
+                        if len(re.findall(search, paragraph.text)) > 0:
                             # ファイルサイズを取得
                             size = path.stat().st_size
                             msg += filename + " : "+format_bytes(size)+"\n"
@@ -112,7 +114,7 @@ def foldersize(infolder, ext, extList, search):
                                 break
                             for cell in row.cells:
                                 # 検索文字が含まれているか
-                                if search in cell.text:
+                                if len(re.findall(search, cell.text)) > 0:
                                     # ファイルサイズを取得
                                     size = path.stat().st_size
                                     msg += filename + " : "+format_bytes(size)+"\n"
@@ -125,7 +127,7 @@ def foldersize(infolder, ext, extList, search):
                 elif ext == ".pdf":
                     txt = extract_text(filename)
                     # 検索文字が含まれているか
-                    if search in txt:
+                    if len(re.findall(search, txt)) > 0:
                         # ファイルサイズを取得
                         size = path.stat().st_size
                         msg += filename + " : "+format_bytes(size)+"\n"
@@ -142,7 +144,7 @@ def foldersize(infolder, ext, extList, search):
                                 # テキストファイルかどうか
                                 if encode != None:
                                     txt = path.read_text(encoding=encode)
-                                    if search in txt:
+                                    if len(re.findall(search, txt)) > 0:
                                         # ファイルサイズを取得
                                         size = path.stat().st_size
                                         msg += filename + " : "+format_bytes(size)+"\n"
