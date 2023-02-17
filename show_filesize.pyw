@@ -125,15 +125,18 @@ def foldersize(infolder, ext, extList, search):
                                     break
                 # PDFファイルかどうか
                 elif ext == ".pdf":
-                    txt = extract_text(filename)
-                    # 検索文字が含まれているか
-                    if len(re.findall(search, txt)) > 0:
-                        # ファイルサイズを取得
-                        size = path.stat().st_size
-                        msg += filename + " : "+format_bytes(size)+"\n"
-                        allsize += size
-                        grepList.append(filename)
-                        grepExtSet.add(ext)
+                    try:
+                        txt = extract_text(filename)
+                        # 検索文字が含まれているか
+                        if len(re.findall(search, txt)) > 0:
+                            # ファイルサイズを取得
+                            size = path.stat().st_size
+                            msg += filename + " : "+format_bytes(size)+"\n"
+                            allsize += size
+                            grepList.append(filename)
+                            grepExtSet.add(ext)
+                    except:
+                        pass
                 # テキストファイルかどうか
                 else:
                     with open(path, "rb") as f:
