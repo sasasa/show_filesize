@@ -140,12 +140,14 @@ def foldersize(infolder, ext, extList, search):
                 # テキストファイルかどうか
                 else:
                     with open(path, "rb") as f:
-                        b = f.read(1024)
+                        b = f.read(4096)
                         if b:
                             try:
                                 encode = detect(b)["encoding"]
                                 # テキストファイルかどうか
                                 if encode != None:
+                                    if encode == "Windows-1252":
+                                        encode = "SHIFT-JIS"
                                     txt = path.read_text(encoding=encode)
                                     if len(re.findall(search, txt)) > 0:
                                         # ファイルサイズを取得
