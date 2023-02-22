@@ -25,13 +25,37 @@ def format_bytes(size):
         n += 1
     return str(int(size)) + " " + units[n]
 
+def copyFiles():
+    global copyList, filelist, grepList, grepCopyList
+    if len(grepCopyList) > 0:
+        for i, path in enumerate(grepCopyList):
+            # フォルダが存在しなければ作成する
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+            # ファイルをコピーする
+            with open(grepList[i], "rb") as f:
+                with open(path, "wb") as f2:
+                    f2.write(f.read())
+        return
+    if len(copyList) > 0:
+        for i, path in enumerate(copyList):
+            # フォルダが存在しなければ作成する
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+            # ファイルをコピーする
+            with open(filelist[i], "rb") as f:
+                with open(path, "wb") as f2:
+                    f2.write(f.read())
+
 #【3.関数: フォルダ以下のファイルのサイズ合計を求める】
 def foldersize(infolder, ext, extList, search):
-    global itms
+    global itms, copyList, filelist, grepList, grepCopyList
     msg = ""
     allsize = 0
     filelist = []
+    copyList = []
     grepList = []
+    grepCopyList = []
     extSet = set()
     grepExtSet = set()
     # "全て"を含むか
@@ -49,6 +73,11 @@ def foldersize(infolder, ext, extList, search):
             searchFiles = getattr(Path(infolder), 'rglob')#このフォルダ以下すべてのファイルを
         for p in flatten([searchFiles(f"*.{x}") for x in ext]):
             if p.name and p.name[0] != "." and p.is_file():                #隠しファイルでなければ
+                # コピー先パスを取得する
+                # パスが存在しているならば
+                if values["outfolder"] != "" and values["outfolder"] != infolder and values["outfolder"] != "." and values["outfolder"] != "./" and os.path.isdir(values["outfolder"]):
+                    # コピーするファイルのパスを取得する
+                    copyList.append((values["outfolder"] + "/" + os.path.relpath(p, infolder)))
                 filelist.append(str(p))         #リストに追加して
         for filename in sorted(filelist):       #ソートして1ファイルずつ処理
             # 拡張子を取得 小文字に変換
@@ -56,9 +85,10 @@ def foldersize(infolder, ext, extList, search):
             extSet.add(ext)
             path = Path(filename)
             if search != "":
+                # search = re.compile(repr(search)[1:-1])
                 search = re.compile(search)
                 # エクセルファイルかどうか
-                if ext == ".xls" or ext == ".xlsx":
+                if ext == ".xlsx":
                     # エクセルファイルを開く
                     wb = load_workbook(filename)
                     # シート名を取得
@@ -82,6 +112,9 @@ def foldersize(infolder, ext, extList, search):
                                     msg += filename + " : "+format_bytes(size)+"\n"
                                     allsize += size
                                     grepList.append(filename)
+                                    if values["outfolder"] != "" and values["outfolder"] != infolder and values["outfolder"] != "." and values["outfolder"] != "./" and os.path.isdir(values["outfolder"]):
+                                        # コピーするファイルのパスを取得する
+                                        grepCopyList.append((values["outfolder"] + "/" + os.path.relpath(path, infolder)))
                                     grepExtSet.add(ext)
                                     flg = False
                                     break
@@ -102,6 +135,9 @@ def foldersize(infolder, ext, extList, search):
                             msg += filename + " : "+format_bytes(size)+"\n"
                             allsize += size
                             grepList.append(filename)
+                            if values["outfolder"] != "" and values["outfolder"] != infolder and values["outfolder"] != "." and values["outfolder"] != "./" and os.path.isdir(values["outfolder"]):
+                                # コピーするファイルのパスを取得する
+                                grepCopyList.append((values["outfolder"] + "/" + os.path.relpath(path, infolder)))
                             grepExtSet.add(ext)
                             flg = False
                             break
@@ -120,6 +156,9 @@ def foldersize(infolder, ext, extList, search):
                                     msg += filename + " : "+format_bytes(size)+"\n"
                                     allsize += size
                                     grepList.append(filename)
+                                    if values["outfolder"] != "" and values["outfolder"] != infolder and values["outfolder"] != "." and values["outfolder"] != "./" and os.path.isdir(values["outfolder"]):
+                                        # コピーするファイルのパスを取得する
+                                        grepCopyList.append((values["outfolder"] + "/" + os.path.relpath(path, infolder)))
                                     grepExtSet.add(ext)
                                     flg = False
                                     break
@@ -134,6 +173,9 @@ def foldersize(infolder, ext, extList, search):
                             msg += filename + " : "+format_bytes(size)+"\n"
                             allsize += size
                             grepList.append(filename)
+                            if values["outfolder"] != "" and values["outfolder"] != infolder and values["outfolder"] != "." and values["outfolder"] != "./" and os.path.isdir(values["outfolder"]):
+                                # コピーするファイルのパスを取得する
+                                grepCopyList.append((values["outfolder"] + "/" + os.path.relpath(path, infolder)))
                             grepExtSet.add(ext)
                     except:
                         pass
@@ -155,6 +197,9 @@ def foldersize(infolder, ext, extList, search):
                                         msg += filename + " : "+format_bytes(size)+"\n"
                                         allsize += size
                                         grepList.append(filename)
+                                        if values["outfolder"] != "" and values["outfolder"] != infolder and values["outfolder"] != "." and values["outfolder"] != "./" and os.path.isdir(values["outfolder"]):
+                                            # コピーするファイルのパスを取得する
+                                            grepCopyList.append((values["outfolder"] + "/" + os.path.relpath(path, infolder)))
                                         grepExtSet.add(ext)
                             except:
                                 pass
@@ -194,6 +239,10 @@ def foldersize(infolder, ext, extList, search):
 #--------------------^^^
 def execute():
     infolder = values["infolder"]
+    outfolder = values["outfolder"]
+    if infolder == outfolder:
+        sg.popup("読み込みフォルダと書き込みフォルダが同じです", title='エラー', keep_on_top=True)
+        return
     value1 = values["input1"]
     search = values["input2"]
     # 絞り込む拡張子を取得
@@ -208,14 +257,15 @@ def execute():
 itms = ["全て",]
 layout = [[sg.Text("読み込みフォルダ", size=(14,1)),
            sg.Input(infolder, key="infolder"),sg.FolderBrowse("選択")],
+           [sg.Text("書き込みフォルダ", size=(14,1)),
+           sg.Input("", key="outfolder"),sg.FolderBrowse("選択")],
           [sg.Text(label1, size=(14,1)), sg.Input(value1, key="input1")],
           [sg.Text("検索文字", size=(14,1)), sg.Input("", key="input2")],
-          [sg.Button("実行", size=(20,1), pad=(5,15), bind_return_key=True)],
+          [sg.Button("検索", size=(20,1), pad=(5,5), bind_return_key=True)],
+          [sg.Button("フォルダごとコピー", size=(20,1), bind_return_key=True)],
           [sg.Radio('このフォルダだけ', group_id="RADIO", default=True, key="radio1", enable_events=True),
            sg.Radio('このフォルダ配下全て', group_id="RADIO", default=False, key="radio2", enable_events=True),],
-          [sg.Listbox(itms, size=(35,len(itms)), default_values=[["全て"]], key="listbox1", enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE),
-        #    sg.Button("絞り込み", pad=(5,15))
-            ],
+          [sg.Listbox(itms, size=(35,len(itms)), default_values=[["全て"]], key="listbox1", enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE),],
           [sg.Multiline(key="text1", size=(60,10))]]
 # Listboxを選択状態にする
 #アプリの実行処理
@@ -226,8 +276,11 @@ while True:
     # print(" イベント:",event ,", 値:",values)
     if event == None:
         break
-    if event == "実行":
+    if event == "検索":
         execute()
+    if event == "フォルダごとコピー":
+        execute()
+        copyFiles()
     if event == "radio1":
         execute()
     if event == "radio2":
